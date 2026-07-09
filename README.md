@@ -36,4 +36,4 @@ E2E tests use zero pixel screenshot tolerance and generate walkthrough README fi
 - `/cast?slug=my-table` shared Chromecast screen
 - `/replay` paste or inspect action logs from old games
 
-Firebase mode requires Google sign-in and uses the signed-in user email as the player identity. Use `mode=local` for a browser-local action log: `/table?slug=demo&mode=local&me=ana@example.com`.
+Firebase mode requires Google sign-in and uses the signed-in user email as the player identity. Use `mode=local` only for a browser-local action log: `/table?slug=demo&mode=local&me=ana@example.com`.

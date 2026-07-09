@@ -4,9 +4,8 @@
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
 
-  const tableId = $page.url.searchParams.get('slug') || 'demo';
-  const localMode =
-    $page.url.searchParams.get('mode') === 'local' || tableId === 'demo' || tableId.startsWith('e2e-');
+  const tableId = $page.url.searchParams.get('slug') || 'game-night';
+  const localMode = $page.url.searchParams.get('mode') === 'local' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
   $: snapshot = $game;
   $: state = snapshot.state;

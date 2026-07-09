@@ -6,10 +6,9 @@
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
 
-  const tableId = $page.url.searchParams.get('slug') || 'demo';
+  const tableId = $page.url.searchParams.get('slug') || 'game-night';
   const urlMe = $page.url.searchParams.get('me') || 'player@example.com';
-  const localMode =
-    $page.url.searchParams.get('mode') === 'local' || tableId === 'demo' || tableId.startsWith('e2e-');
+  const localMode = $page.url.searchParams.get('mode') === 'local' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
   let answer = '';
 

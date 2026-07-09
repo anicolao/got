@@ -19,10 +19,9 @@
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
 
-  const tableId = $page.url.searchParams.get('slug') || 'demo';
+  const tableId = $page.url.searchParams.get('slug') || 'game-night';
   const urlMe = $page.url.searchParams.get('me') || 'moderator@example.com';
-  const localMode =
-    $page.url.searchParams.get('mode') === 'local' || tableId === 'demo' || tableId.startsWith('e2e-');
+  const localMode = $page.url.searchParams.get('mode') === 'local' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
 
   let ready = false;
@@ -117,21 +116,25 @@
         </label>
         <button class="primary" on:click={revealCategory}>Reveal Category</button>
 
-        <div class="inline-form">
-          <label>
-            Player
-            <input aria-label="Player email" bind:value={quickPlayer} placeholder="player@example.com" />
-          </label>
-          <button on:click={addPlayer}>Join</button>
-        </div>
+        {#if localMode}
+          <div class="inline-form">
+            <label>
+              Player
+              <input aria-label="Player email" bind:value={quickPlayer} placeholder="player@example.com" />
+            </label>
+            <button on:click={addPlayer}>Join</button>
+          </div>
 
-        <div class="inline-form">
-          <label>
-            Answer
-            <input aria-label="Answer for selected player" bind:value={quickAnswer} />
-          </label>
-          <button on:click={addAnswer}>Record</button>
-        </div>
+          <div class="inline-form">
+            <label>
+              Answer
+              <input aria-label="Answer for selected player" bind:value={quickAnswer} />
+            </label>
+            <button on:click={addAnswer}>Record</button>
+          </div>
+        {:else if state.players.length === 0}
+          <p class="waiting">Waiting for signed-in players to join.</p>
+        {/if}
 
         {#if state.roundReady}
           <button class="primary" on:click={() => game.dispatch(show_round(true))}>Start Round</button>

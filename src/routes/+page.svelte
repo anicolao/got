@@ -1,13 +1,12 @@
 <script lang="ts">
   import { base } from '$app/paths';
 
-  let tableId = 'demo';
-  let player = 'ana@example.com';
+  let tableId = 'game-night';
 
-  $: localSuffix = tableId === 'demo' ? '&mode=local' : '';
-  $: tableHref = `${base}/table?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${localSuffix}`;
-  $: playHref = `${base}/play?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${localSuffix}`;
-  $: castHref = `${base}/cast?slug=${encodeURIComponent(tableId)}${localSuffix}`;
+  $: tableHref = `${base}/table?slug=${encodeURIComponent(tableId)}`;
+  $: playHref = `${base}/play?slug=${encodeURIComponent(tableId)}`;
+  $: castHref = `${base}/cast?slug=${encodeURIComponent(tableId)}`;
+  $: localDemoHref = `${base}/table?slug=demo&mode=local&me=ana@example.com`;
 </script>
 
 <svelte:head>
@@ -26,17 +25,13 @@
       Table
       <input bind:value={tableId} autocomplete="off" />
     </label>
-    <label>
-      Player
-      <input bind:value={player} autocomplete="email" />
-    </label>
-
     <div class="actions">
       <a class="primary" href={tableHref}>Moderate</a>
       <a href={playHref}>Player</a>
       <a href={castHref}>Cast</a>
       <a href={`${base}/replay`}>Replay</a>
     </div>
+    <a class="demo" href={localDemoHref}>Local demo</a>
   </section>
 </main>
 
@@ -115,5 +110,12 @@
     background: #0f172a;
     color: #fff;
     border-color: #0f172a;
+  }
+
+  .demo {
+    margin-top: 10px;
+    min-height: 40px;
+    color: #64748b;
+    font-size: 0.9rem;
   }
 </style>
