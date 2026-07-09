@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import AuthBar from '$lib/components/AuthBar.svelte';
   import { authState } from '$lib/firebase/auth-store';
+  import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
   import {
     answer_category,
     currentPlayer,
@@ -62,7 +63,11 @@
 
   onMount(() => {
     ready = true;
+    if (!localMode) subscribeLobby();
   });
+
+  $: table = $lobbyStore.tables.tableIdToTable[tableId];
+  $: isOwner = localMode || table?.owner === me;
 </script>
 
 <svelte:head>
@@ -83,7 +88,7 @@
     <AuthBar />
   {/if}
 
-  {#if signedIn}
+  {#if signedIn && isOwner}
     <section class="scoreboard" aria-label="Scoreboard">
       {#each state.players as player, i}
         <article class:out={!state.alive[i]} class:active={i === state.currentPlayerIndex && state.showRound}>
@@ -103,6 +108,9 @@
     {/if}
     {#if !signedIn}
       <p class="waiting">Sign in to moderate this table.</p>
+    {:else if !isOwner}
+      <p class="waiting">Only {displayName(table?.owner || 'the table owner')} can moderate this table.</p>
+      <a class="primary" href={`${base}/play?slug=${encodeURIComponent(tableId)}`}>Play at this table</a>
     {:else}
       <div class="section-title">
         <p class="label">Round</p>
