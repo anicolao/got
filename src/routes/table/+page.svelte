@@ -1,7 +1,9 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import AuthBar from '$lib/components/AuthBar.svelte';
+  import { authState } from '$lib/firebase/auth-store';
   import {
     answer_category,
     currentPlayer,
@@ -18,7 +20,7 @@
   import { createRemoteGame } from '$lib/firebase/remote-game';
 
   const tableId = $page.url.searchParams.get('slug') || 'demo';
-  const me = $page.url.searchParams.get('me') || 'moderator@example.com';
+  const urlMe = $page.url.searchParams.get('me') || 'moderator@example.com';
   const localMode =
     $page.url.searchParams.get('mode') === 'local' || tableId === 'demo' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
@@ -30,6 +32,8 @@
 
   $: snapshot = $game;
   $: state = snapshot.state;
+  $: me = localMode ? urlMe : $authState.user?.email || '';
+  $: signedIn = localMode || !!$authState.user?.email;
   $: current = currentPlayer(state);
   $: waitingPlayers = state.players.filter((player) => !state.playerToAnswer[player]);
 
@@ -73,74 +77,80 @@
       <h1>Game of Things</h1>
       <p class="table">Table {tableId}</p>
     </div>
-    <a href={`/cast?slug=${encodeURIComponent(tableId)}`} target="_blank" rel="noreferrer">Cast</a>
+    <a href={`${base}/cast?slug=${encodeURIComponent(tableId)}${localMode ? '&mode=local' : ''}`} target="_blank" rel="noreferrer">Cast</a>
   </header>
 
   {#if !localMode}
     <AuthBar />
   {/if}
 
-  <section class="scoreboard" aria-label="Scoreboard">
-    {#each state.players as player, i}
-      <article class:out={!state.alive[i]} class:active={i === state.currentPlayerIndex && state.showRound}>
-        <strong>{displayName(player)}</strong>
-        <span>{state.scores[i]}</span>
-        <button aria-label={`Remove ${displayName(player)}`} on:click={() => game.dispatch(leave_game(player))}>
-          x
-        </button>
-      </article>
-    {/each}
-  </section>
+  {#if signedIn}
+    <section class="scoreboard" aria-label="Scoreboard">
+      {#each state.players as player, i}
+        <article class:out={!state.alive[i]} class:active={i === state.currentPlayerIndex && state.showRound}>
+          <strong>{displayName(player)}</strong>
+          <span>{state.scores[i]}</span>
+          <button aria-label={`Remove ${displayName(player)}`} on:click={() => game.dispatch(leave_game(player))}>
+            x
+          </button>
+        </article>
+      {/each}
+    </section>
+  {/if}
 
   <section class="control">
     {#if snapshot.error}
       <p class="error">{snapshot.error}</p>
     {/if}
-    <div class="section-title">
-      <p class="label">Round</p>
-      <h2>Things {state.currentCategory ? `... ${state.currentCategory}` : ''}</h2>
-    </div>
-
-    {#if !state.showRound || state.roundOver}
-      <label>
-        Category
-        <input aria-label="Category" bind:value={category} placeholder="you should never say..." />
-      </label>
-      <button class="primary" on:click={revealCategory}>Reveal Category</button>
-
-      <div class="inline-form">
-        <label>
-          Player
-          <input aria-label="Player email" bind:value={quickPlayer} placeholder="player@example.com" />
-        </label>
-        <button on:click={addPlayer}>Join</button>
-      </div>
-
-      <div class="inline-form">
-        <label>
-          Answer
-          <input aria-label="Answer for selected player" bind:value={quickAnswer} />
-        </label>
-        <button on:click={addAnswer}>Record</button>
-      </div>
-
-      {#if state.roundReady}
-        <button class="primary" on:click={() => game.dispatch(show_round(true))}>Start Round</button>
-      {:else if state.players.length > 0}
-        <p class="waiting">Waiting for {waitingPlayers.map(displayName).join(', ')}</p>
-      {/if}
+    {#if !signedIn}
+      <p class="waiting">Sign in to moderate this table.</p>
     {:else}
-      <p class="turn">Current player: <strong>{displayName(current)}</strong></p>
-      <div class="eliminations">
-        {#each state.players as player, i}
-          {#if state.alive[i] && player !== current}
-            <button on:click={() => game.dispatch(guesses({ player: current, dead_player: player }))}>
-              {displayName(current)} guessed {displayName(player)}
-            </button>
-          {/if}
-        {/each}
+      <div class="section-title">
+        <p class="label">Round</p>
+        <h2>Things {state.currentCategory ? `... ${state.currentCategory}` : ''}</h2>
       </div>
-      <button class="primary" on:click={wrongGuess}>{displayName(current)} guessed wrong</button>
+
+      {#if !state.showRound || state.roundOver}
+        <label>
+          Category
+          <input aria-label="Category" bind:value={category} placeholder="you should never say..." />
+        </label>
+        <button class="primary" on:click={revealCategory}>Reveal Category</button>
+
+        <div class="inline-form">
+          <label>
+            Player
+            <input aria-label="Player email" bind:value={quickPlayer} placeholder="player@example.com" />
+          </label>
+          <button on:click={addPlayer}>Join</button>
+        </div>
+
+        <div class="inline-form">
+          <label>
+            Answer
+            <input aria-label="Answer for selected player" bind:value={quickAnswer} />
+          </label>
+          <button on:click={addAnswer}>Record</button>
+        </div>
+
+        {#if state.roundReady}
+          <button class="primary" on:click={() => game.dispatch(show_round(true))}>Start Round</button>
+        {:else if state.players.length > 0}
+          <p class="waiting">Waiting for {waitingPlayers.map(displayName).join(', ')}</p>
+        {/if}
+      {:else}
+        <p class="turn">Current player: <strong>{displayName(current)}</strong></p>
+        <div class="eliminations">
+          {#each state.players as player, i}
+            {#if state.alive[i] && player !== current}
+              <button on:click={() => game.dispatch(guesses({ player: current, dead_player: player }))}>
+                {displayName(current)} guessed {displayName(player)}
+              </button>
+            {/if}
+          {/each}
+        </div>
+        <button class="primary" on:click={wrongGuess}>{displayName(current)} guessed wrong</button>
+      {/if}
     {/if}
   </section>
 

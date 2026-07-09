@@ -1,4 +1,5 @@
 import { firestore } from './config';
+import { auth } from './config';
 import type { ThingsAction } from '$lib/domain/things';
 import { normalizeAction } from '$lib/domain/things';
 import type { AnyAction } from '@reduxjs/toolkit';
@@ -18,6 +19,8 @@ export async function appendTableAction(tableId: string, action: ThingsAction) {
   await addDoc(collection(firestore, 'tables', tableId, 'actions'), {
     type: action.type,
     ...payload,
+    creator: auth?.currentUser?.uid ?? null,
+    creatorEmail: auth?.currentUser?.email ?? null,
     timestamp: serverTimestamp()
   });
 }

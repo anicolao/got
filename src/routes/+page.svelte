@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { base } from '$app/paths';
+
   let tableId = 'demo';
   let player = 'ana@example.com';
+
+  $: localSuffix = tableId === 'demo' ? '&mode=local' : '';
+  $: tableHref = `${base}/table?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${localSuffix}`;
+  $: playHref = `${base}/play?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${localSuffix}`;
+  $: castHref = `${base}/cast?slug=${encodeURIComponent(tableId)}${localSuffix}`;
 </script>
 
 <svelte:head>
@@ -25,12 +32,10 @@
     </label>
 
     <div class="actions">
-      <a class="primary" href={`/table?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${tableId === 'demo' ? '&mode=local' : ''}`}>
-        Moderate
-      </a>
-      <a href={`/play?slug=${encodeURIComponent(tableId)}&me=${encodeURIComponent(player)}${tableId === 'demo' ? '&mode=local' : ''}`}>Player</a>
-      <a href={`/cast?slug=${encodeURIComponent(tableId)}${tableId === 'demo' ? '&mode=local' : ''}`}>Cast</a>
-      <a href="/replay">Replay</a>
+      <a class="primary" href={tableHref}>Moderate</a>
+      <a href={playHref}>Player</a>
+      <a href={castHref}>Cast</a>
+      <a href={`${base}/replay`}>Replay</a>
     </div>
   </section>
 </main>

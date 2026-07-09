@@ -1,12 +1,13 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import AuthBar from '$lib/components/AuthBar.svelte';
+  import { authState } from '$lib/firebase/auth-store';
   import { answer_category, displayName, join_game } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
 
   const tableId = $page.url.searchParams.get('slug') || 'demo';
-  const me = $page.url.searchParams.get('me') || 'player@example.com';
+  const urlMe = $page.url.searchParams.get('me') || 'player@example.com';
   const localMode =
     $page.url.searchParams.get('mode') === 'local' || tableId === 'demo' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
@@ -14,6 +15,8 @@
 
   $: snapshot = $game;
   $: state = snapshot.state;
+  $: me = localMode ? urlMe : $authState.user?.email || '';
+  $: signedIn = localMode || !!$authState.user?.email;
   $: joined = state.players.includes(me);
   $: existingAnswer = state.playerToAnswer[me] || '';
 
@@ -31,23 +34,29 @@
     {#if !localMode}
       <AuthBar />
     {/if}
-    <p class="label">Player</p>
-    <h1>{displayName(me)}</h1>
-    <p class="category">Things {state.currentCategory ? `... ${state.currentCategory}` : 'are waiting for a category'}</p>
-
-    {#if !joined}
-      <button class="primary" on:click={() => game.dispatch(join_game(me))}>Join Game</button>
+    {#if !signedIn}
+      <p class="label">Player</p>
+      <h1>Sign in to play</h1>
+      <p class="category">Your answer is tied to your Google account.</p>
     {:else}
-      <label>
-        Your answer
-        <textarea aria-label="Your answer" bind:value={answer} placeholder="Type something the room can guess"></textarea>
-      </label>
-      <button class="primary" on:click={submit}>Submit Answer</button>
-      {#if existingAnswer}
-        <p class="submitted">Submitted: <strong>{existingAnswer}</strong></p>
-      {/if}
-      {#if snapshot.error}
-        <p class="error">{snapshot.error}</p>
+      <p class="label">Player</p>
+      <h1>{displayName(me)}</h1>
+      <p class="category">Things {state.currentCategory ? `... ${state.currentCategory}` : 'are waiting for a category'}</p>
+
+      {#if !joined}
+        <button class="primary" on:click={() => game.dispatch(join_game(me))}>Join Game</button>
+      {:else}
+        <label>
+          Your answer
+          <textarea aria-label="Your answer" bind:value={answer} placeholder="Type something the room can guess"></textarea>
+        </label>
+        <button class="primary" on:click={submit}>Submit Answer</button>
+        {#if existingAnswer}
+          <p class="submitted">Submitted: <strong>{existingAnswer}</strong></p>
+        {/if}
+        {#if snapshot.error}
+          <p class="error">{snapshot.error}</p>
+        {/if}
       {/if}
     {/if}
   </section>

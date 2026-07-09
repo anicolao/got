@@ -31,9 +31,9 @@ E2E tests use zero pixel screenshot tolerance and generate walkthrough README fi
 
 ## Routes
 
-- `/table?slug=my-table&me=ana@example.com` moderator console
-- `/play?slug=my-table&me=ana@example.com` player answer screen
+- `/table?slug=my-table` moderator console
+- `/play?slug=my-table` player answer screen
 - `/cast?slug=my-table` shared Chromecast screen
 - `/replay` paste or inspect action logs from old games
 
-Use `mode=local` for a browser-local action log: `/table?slug=demo&mode=local`.
+Firebase mode requires Google sign-in and uses the signed-in user email as the player identity. Use `mode=local` for a browser-local action log: `/table?slug=demo&mode=local&me=ana@example.com`.
