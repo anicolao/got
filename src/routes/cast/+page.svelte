@@ -52,14 +52,17 @@
 
 <style>
   .cast {
-    min-height: 100svh;
-    padding: clamp(20px, 4vw, 48px);
+    width: 100vw;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    padding: clamp(12px, 2.4vw, 34px);
     background: #0f172a;
     color: #fff;
     display: grid;
     grid-template-columns: 1fr minmax(220px, 28vw);
-    grid-template-rows: auto 1fr;
-    gap: 24px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: clamp(10px, 1.8vw, 22px);
   }
 
   header {
@@ -78,27 +81,40 @@
   }
 
   h1 {
-    margin-top: 8px;
-    font-size: clamp(2rem, 6vw, 5.5rem);
+    margin-top: 5px;
+    font-size: clamp(1.4rem, 4.4vw, 4.4rem);
     line-height: 1.02;
+    max-height: 2.1em;
+    overflow: hidden;
   }
 
   .answers {
     display: grid;
-    gap: 14px;
-    align-content: start;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: clamp(6px, 1vw, 12px);
+    min-height: 0;
+    overflow: hidden;
   }
 
   article {
-    min-height: 72px;
+    min-height: 0;
     display: grid;
     align-items: center;
     background: #ffffff;
     color: #111827;
     border-radius: 8px;
-    padding: 18px 22px;
-    font-size: clamp(1.25rem, 2.4vw, 2.4rem);
+    padding: clamp(8px, 1.4vw, 18px);
+    font-size: clamp(0.95rem, 2vw, 2.2rem);
     font-weight: 900;
+    overflow: hidden;
+  }
+
+  article span {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
 
   article.out {
@@ -109,20 +125,29 @@
 
   .scores {
     display: grid;
-    align-content: start;
-    gap: 10px;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: clamp(5px, 0.8vw, 10px);
+    min-height: 0;
+    overflow: hidden;
   }
 
   .scores div {
-    min-height: 54px;
+    min-height: 0;
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 8px;
-    padding: 10px 12px;
+    padding: clamp(6px, 1vw, 10px);
     background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+
+  .scores strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .scores .current {
@@ -131,19 +156,21 @@
   }
 
   .scores span {
-    font-size: 1.6rem;
+    font-size: clamp(1rem, 2vw, 1.6rem);
     font-weight: 900;
   }
 
   .join {
     grid-column: 1 / -1;
+    min-height: 0;
     display: grid;
     place-items: center;
     gap: 16px;
+    overflow: hidden;
   }
 
   .join div {
-    width: min(62vw, 420px);
+    width: min(46vw, 46vh, 420px);
     aspect-ratio: 1;
     display: grid;
     place-items: center;
@@ -157,6 +184,7 @@
   @media (max-width: 720px) {
     .cast {
       grid-template-columns: 1fr;
+      grid-template-rows: auto minmax(0, 1fr) minmax(96px, 26vh);
     }
   }
 </style>

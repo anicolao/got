@@ -31,6 +31,8 @@
   $: me = $authState.user?.email || '';
   $: signedIn = !!me;
   $: tables = $lobbyStore.tables.tableIds
+    .slice()
+    .reverse()
     .map((tableId) => $lobbyStore.tables.tableIdToTable[tableId])
     .filter((table): table is Table => !!table && !table.completed)
     .filter((table) => isThingsGame(table.gameid, $lobbyStore.gamedefs));
@@ -50,6 +52,8 @@
   async function createTable() {
     await withBusy(async () => {
       const tableId = await createThingsTable(me);
+      await appendTableAction(tableId, join_game(me));
+      await appendLobbyAction(start_table({ tableid: tableId }));
       await goto(`${base}/table?slug=${encodeURIComponent(tableId)}`);
     });
   }
@@ -57,6 +61,8 @@
   async function joinTable(tableId: string) {
     await withBusy(async () => {
       await appendLobbyAction(join_table({ tableid: tableId, player: me }));
+      await appendTableAction(tableId, join_game(me));
+      await goto(`${base}/play?slug=${encodeURIComponent(tableId)}`);
     });
   }
 
@@ -102,7 +108,7 @@
     </section>
   {:else}
     <section class="toolbar">
-      <button class="primary" disabled={busy} on:click={createTable}>New Game of Things Table</button>
+      <button class="primary" disabled={busy} on:click={createTable}>Create and Start Table</button>
       <a href={`${base}/replay`}>Replay old game</a>
     </section>
 
@@ -141,9 +147,7 @@
               {/if}
               <a href={`${base}/cast?slug=${encodeURIComponent(table.tableid)}`}>Cast</a>
             {:else if owner}
-              <button class="primary" disabled={busy || table.players.length < 2} on:click={() => startTable(table)}>
-                Start
-              </button>
+              <button class="primary" disabled={busy} on:click={() => startTable(table)}>Start</button>
             {:else if joined}
               <button disabled={busy} on:click={() => leaveTable(table.tableid)}>Leave</button>
             {:else}
