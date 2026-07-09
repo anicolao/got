@@ -27,6 +27,7 @@
 
   let ready = false;
   let category = '';
+  let answer = '';
   let quickPlayer = '';
   let quickAnswer = '';
 
@@ -36,10 +37,20 @@
   $: signedIn = localMode || !!$authState.user?.email;
   $: current = currentPlayer(state);
   $: waitingPlayers = state.players.filter((player) => !state.playerToAnswer[player]);
+  $: submittedPlayers = state.players.filter((player) => !!state.playerToAnswer[player]);
+  $: joined = !!me && state.players.includes(me);
+  $: myAnswer = state.playerToAnswer[me] || '';
 
   function revealCategory() {
     const value = category.trim();
     if (value) game.dispatch(set_category(value));
+  }
+
+  function submitAnswer() {
+    const value = answer.trim();
+    if (value && me) {
+      game.dispatch(answer_category({ player: me, answer: value }));
+    }
   }
 
   function addPlayer() {
@@ -102,6 +113,27 @@
     </section>
   {/if}
 
+  {#if signedIn && joined}
+    <section class="player-panel" aria-label="Your clue">
+      <div>
+        <p class="label">Your clue</p>
+        <h2>Things {state.currentCategory ? `... ${state.currentCategory}` : 'need a category first'}</h2>
+      </div>
+      {#if myAnswer}
+        <p class="submitted">Submitted: <strong>{myAnswer}</strong></p>
+      {/if}
+      {#if !state.showRound || state.roundOver}
+        <label>
+          Your clue
+          <textarea aria-label="Your clue" bind:value={answer} placeholder="Type your clue"></textarea>
+        </label>
+        <button class="primary" disabled={!state.currentCategory || !answer.trim()} on:click={submitAnswer}>
+          Submit Clue
+        </button>
+      {/if}
+    </section>
+  {/if}
+
   <section class="control">
     {#if snapshot.error}
       <p class="error">{snapshot.error}</p>
@@ -124,6 +156,39 @@
         </label>
         <button class="primary" on:click={revealCategory}>Reveal Category</button>
 
+        <div class="readiness" aria-label="Player readiness">
+          <div>
+            <h3>Submitted ({submittedPlayers.length})</h3>
+            {#if submittedPlayers.length === 0}
+              <p class="waiting">No clues submitted yet.</p>
+            {:else}
+              <ul>
+                {#each submittedPlayers as player}
+                  <li>
+                    <span>{displayName(player)}</span>
+                    <strong>Ready</strong>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+          <div>
+            <h3>Waiting ({waitingPlayers.length})</h3>
+            {#if waitingPlayers.length === 0}
+              <p class="waiting">Everyone is ready.</p>
+            {:else}
+              <ul>
+                {#each waitingPlayers as player}
+                  <li>
+                    <span>{displayName(player)}</span>
+                    <button aria-label={`Remove ${displayName(player)}`} on:click={() => game.dispatch(leave_game(player))}>Remove</button>
+                  </li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+        </div>
+
         {#if localMode}
           <div class="inline-form">
             <label>
@@ -145,7 +210,9 @@
         {/if}
 
         {#if state.roundReady}
-          <button class="primary" on:click={() => game.dispatch(show_round(true))}>Start Round</button>
+          <button class="primary" on:click={() => game.dispatch(show_round(true))}>
+            Show Answers on Cast
+          </button>
         {:else if state.players.length > 0}
           <p class="waiting">Waiting for {waitingPlayers.map(displayName).join(', ')}</p>
         {/if}
@@ -185,6 +252,7 @@
 
   header,
   .control,
+  .player-panel,
   .log {
     background: #fff;
     border: 1px solid #d8dee8;
@@ -292,6 +360,11 @@
     gap: 12px;
   }
 
+  .player-panel {
+    display: grid;
+    gap: 12px;
+  }
+
   .section-title {
     display: grid;
     gap: 4px;
@@ -311,6 +384,19 @@
     padding: 0 12px;
   }
 
+  textarea {
+    width: 100%;
+    min-height: 104px;
+    border: 1px solid #b8c0cc;
+    border-radius: 6px;
+    padding: 10px 12px;
+    resize: vertical;
+  }
+
+  .submitted {
+    color: #15803d;
+  }
+
   .inline-form {
     display: grid;
     grid-template-columns: 1fr auto;
@@ -325,6 +411,40 @@
 
   .turn {
     color: #334155;
+  }
+
+  .readiness {
+    display: grid;
+    gap: 10px;
+  }
+
+  .readiness h3 {
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+  }
+
+  .readiness ul {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .readiness li {
+    min-height: 42px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    padding: 6px 8px;
+    background: #f8fafc;
+  }
+
+  .readiness strong {
+    color: #15803d;
   }
 
   .log ol {

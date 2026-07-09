@@ -18,7 +18,8 @@ The moderator creates a category, records answers, and scores guesses.
 ![All answers are recorded](./screenshots/001-answers-ready.png)
 
 **Verifications:**
-- [x] Start Round is available
+- [x] Show Answers on Cast is available
+- [x] Submitted roster counts all players
 - [x] Answer actions are replayed
 
 ---

@@ -42,12 +42,13 @@ test('moderator runs a mobile game round', async ({ page }, testInfo) => {
   await tester.step('answers-ready', {
     description: 'All answers are recorded',
     verifications: [
-      { spec: 'Start Round is available', check: async () => await expect(page.getByRole('button', { name: 'Start Round' })).toBeVisible() },
+      { spec: 'Show Answers on Cast is available', check: async () => await expect(page.getByRole('button', { name: 'Show Answers on Cast' })).toBeVisible() },
+      { spec: 'Submitted roster counts all players', check: async () => await expect(page.getByText('Submitted (3)')).toBeVisible() },
       { spec: 'Answer actions are replayed', check: async () => await expect(page.locator('code').filter({ hasText: 'answer_category' })).toHaveCount(3) }
     ]
   });
 
-  await page.getByRole('button', { name: 'Start Round' }).click();
+  await page.getByRole('button', { name: 'Show Answers on Cast' }).click();
   await page.getByRole('button', { name: 'Ana guessed Bev' }).click();
 
   await tester.step('score-guess', {

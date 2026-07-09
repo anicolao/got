@@ -1,5 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
+  import QRCode from '$lib/components/QRCode.svelte';
   import { displayName } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
@@ -14,6 +16,7 @@
     answer: state.playerToAnswer[player],
     alive: state.alive[state.players.indexOf(player)]
   }));
+  $: joinUrl = `${$page.url.origin}${base}/play?slug=${encodeURIComponent(tableId)}`;
 </script>
 
 <svelte:head>
@@ -44,8 +47,10 @@
     </aside>
   {:else}
     <section class="join">
-      <div aria-label="Join code">{tableId}</div>
-      <p>Open the player screen and enter this table.</p>
+      <div class="qr-wrap">
+        <QRCode value={joinUrl} label="Join game QR code" />
+      </div>
+      <p>Scan to join</p>
     </section>
   {/if}
 </main>
@@ -169,16 +174,20 @@
     overflow: hidden;
   }
 
-  .join div {
+  .qr-wrap {
     width: min(46vw, 46vh, 420px);
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    border: 12px solid #fff;
-    font-size: clamp(2rem, 7vw, 5rem);
-    font-weight: 900;
     background: #facc15;
-    color: #111827;
+    border: clamp(8px, 1.4vw, 14px) solid #fff;
+    padding: clamp(8px, 1.4vw, 14px);
+  }
+
+  .join p {
+    font-size: clamp(1.2rem, 2.8vw, 3rem);
+    font-weight: 900;
+    color: #facc15;
   }
 
   @media (max-width: 720px) {
