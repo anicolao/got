@@ -200,6 +200,7 @@
     background: rgb(165, 189, 89);
     border-radius: 18px;
     padding: clamp(16px, 2.6vw, 32px);
+    overflow: hidden;
   }
 
   @media (max-width: 720px) {

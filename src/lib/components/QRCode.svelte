@@ -13,7 +13,7 @@
     if (!canvas || !value) return;
     await QRCode.toCanvas(canvas, value, {
       errorCorrectionLevel: 'H',
-      margin: 1,
+      margin: 3,
       scale: 8,
       color: {
         dark: '#111827',
@@ -43,8 +43,13 @@
 <style>
   .qr {
     position: relative;
+    box-sizing: border-box;
     width: 100%;
     height: 100%;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    max-height: 100%;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
@@ -54,9 +59,17 @@
   }
 
   canvas {
+    box-sizing: border-box;
     display: block;
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    left: 4%;
+    top: 4%;
+    width: 92%;
+    height: 92%;
+    min-width: 0;
+    min-height: 0;
+    max-width: 100%;
+    max-height: 100%;
     aspect-ratio: 1;
     image-rendering: pixelated;
   }
