@@ -36,54 +36,65 @@
 </svelte:head>
 
 <main class="player">
-  <section>
-    {#if !localMode}
-      <AuthBar />
-    {/if}
+  <section class="play-card">
     {#if !signedIn}
       <p class="label">Player</p>
       <h1>Sign in to play</h1>
       <p class="category">Your answer is tied to your Google account.</p>
     {:else}
-      <p class="label">Player</p>
-      <h1>{playerName}</h1>
-      <p class="category">Things {state.currentCategory ? `... ${state.currentCategory}` : 'are waiting for a category'}</p>
+      <div class="category-block">
+        <p class="label">Category</p>
+        <h1>Things {state.currentCategory ? `... ${state.currentCategory}` : 'are waiting for a category'}</h1>
+      </div>
 
       {#if !joined}
         <button class="primary" on:click={() => game.dispatch(join_game(me))}>Join Game</button>
       {:else}
         <label>
-          Your answer
-          <textarea aria-label="Your answer" bind:value={answer} placeholder="Type something the room can guess"></textarea>
+          {existingAnswer ? `Your answer: ${existingAnswer}` : 'Your answer'}
+          <input aria-label="Your answer" bind:value={answer} placeholder="Type something the room can guess" />
         </label>
-        <button class="primary" on:click={submit}>Submit Answer</button>
-        {#if existingAnswer}
-          <p class="submitted">Submitted: <strong>{existingAnswer}</strong></p>
-        {/if}
+        <button class="primary" on:click={submit}>{existingAnswer ? 'Update' : 'Submit'}</button>
         {#if snapshot.error}
           <p class="error">{snapshot.error}</p>
         {/if}
       {/if}
     {/if}
   </section>
+
+  <footer class="player-footer">
+    {#if signedIn}
+      <div class="player-info">
+        <p class="label">Player</p>
+        <strong>{playerName}</strong>
+      </div>
+    {/if}
+    {#if !localMode}
+      <AuthBar />
+    {/if}
+  </footer>
 </main>
 
 <style>
   .player {
     min-height: 100svh;
     display: grid;
-    place-items: center;
-    padding: 14px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 14px;
+    padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
   }
 
-  section {
+  .play-card {
     width: min(100%, 460px);
+    align-self: start;
+    justify-self: center;
     display: grid;
-    gap: 14px;
+    gap: 18px;
     background: #fff;
     border: 1px solid #d8dee8;
     border-radius: 8px;
-    padding: 16px;
+    padding: 18px;
+    margin-top: clamp(18px, 8vh, 72px);
   }
 
   p,
@@ -99,11 +110,17 @@
   }
 
   h1 {
-    font-size: 1.7rem;
+    font-size: clamp(1.65rem, 8vw, 2.7rem);
+    line-height: 1.05;
+  }
+
+  .category-block {
+    display: grid;
+    gap: 6px;
   }
 
   .category,
-  .submitted {
+  .player-info {
     color: #475569;
     line-height: 1.4;
   }
@@ -120,12 +137,12 @@
     font-weight: 800;
   }
 
-  textarea {
-    min-height: 140px;
-    resize: vertical;
+  input {
+    min-height: 48px;
     border: 1px solid #b8c0cc;
     border-radius: 6px;
-    padding: 12px;
+    padding: 0 12px;
+    font: inherit;
   }
 
   button {
@@ -140,5 +157,27 @@
     color: #fff;
     background: #0f172a;
     border-color: #0f172a;
+  }
+
+  .player-footer {
+    position: sticky;
+    bottom: 0;
+    width: min(100%, 460px);
+    justify-self: center;
+    display: grid;
+    gap: 8px;
+  }
+
+  .player-info {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .player-info strong {
+    color: #0f172a;
   }
 </style>

@@ -101,7 +101,8 @@
 
   .answers {
     display: grid;
-    grid-auto-rows: minmax(0, 1fr);
+    grid-auto-rows: minmax(0, min(13vh, 132px));
+    align-content: start;
     gap: clamp(6px, 1vw, 12px);
     min-height: 0;
     overflow: hidden;
@@ -136,7 +137,8 @@
 
   .scores {
     display: grid;
-    grid-auto-rows: minmax(0, 1fr);
+    grid-auto-rows: minmax(0, min(8vh, 74px));
+    align-content: start;
     gap: clamp(5px, 0.8vw, 10px);
     min-height: 0;
     overflow: hidden;

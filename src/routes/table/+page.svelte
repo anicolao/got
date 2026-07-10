@@ -269,6 +269,8 @@
     padding: 14px;
     display: grid;
     gap: 14px;
+    max-width: 840px;
+    margin: 0 auto;
   }
 
   header,
@@ -475,15 +477,7 @@
 
   @media (min-width: 800px) {
     .shell {
-      grid-template-columns: 1fr 360px;
-      align-items: start;
-      max-width: 1120px;
-      margin: 0 auto;
-    }
-
-    header,
-    .scoreboard {
-      grid-column: 1 / -1;
+      padding-block: 20px;
     }
   }
 </style>
