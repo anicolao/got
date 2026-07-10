@@ -110,11 +110,18 @@
 
   article.out {
     border-left-color: #b42318;
+    background: #fee2e2;
+    color: #7f1d1d;
+    text-decoration: line-through;
   }
 
   article p {
     grid-column: 1 / -1;
     color: #475569;
+  }
+
+  article.out p {
+    color: #7f1d1d;
   }
 
   article span {

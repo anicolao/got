@@ -45,7 +45,7 @@
     </section>
     <aside class="scores" aria-label="Scores">
       {#each state.players as player, i}
-        <div class:current={i === state.currentPlayerIndex}>
+        <div class:current={i === state.currentPlayerIndex} class:out={!state.alive[i]}>
           <strong>{nameOf(player)}</strong>
           <span>{state.scores[i]}</span>
         </div>
@@ -166,6 +166,18 @@
   .scores .current {
     border-color: #facc15;
     background: rgba(250, 204, 21, 0.16);
+  }
+
+  .scores .out {
+    border-color: #fca5a5;
+    background: rgba(127, 29, 29, 0.72);
+    color: #fecaca;
+    text-decoration: line-through;
+  }
+
+  .scores .current.out {
+    border-color: #facc15;
+    background: rgba(127, 29, 29, 0.72);
   }
 
   .scores span {

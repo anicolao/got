@@ -56,6 +56,7 @@ test('moderator runs a mobile game round', async ({ page }, testInfo) => {
     description: 'Moderator scores a correct guess',
     verifications: [
       { spec: 'Current player is visible', check: async () => await expect(page.getByText('Current player: Ana')).toBeVisible() },
+      { spec: 'Eliminated player is marked out', check: async () => await expect(page.locator('section[aria-label="Scoreboard"] article').filter({ hasText: 'Bev' })).toHaveClass(/out/) },
       { spec: 'Elimination action recorded', check: async () => await expect(page.locator('code').filter({ hasText: 'eliminates' })).toHaveCount(1) }
     ]
   });

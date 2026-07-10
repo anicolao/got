@@ -31,6 +31,7 @@ The moderator creates a category, records answers, and scores guesses.
 
 **Verifications:**
 - [x] Current player is visible
+- [x] Eliminated player is marked out
 - [x] Elimination action recorded
 
 ---

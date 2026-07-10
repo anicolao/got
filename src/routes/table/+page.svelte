@@ -361,7 +361,9 @@
 
   article.out {
     border-left-color: #b42318;
-    color: #64748b;
+    background: #fee2e2;
+    color: #7f1d1d;
+    text-decoration: line-through;
   }
 
   article.active {
@@ -376,6 +378,7 @@
   article button {
     min-height: 36px;
     padding: 0;
+    text-decoration: none;
   }
 
   .control {
