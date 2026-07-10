@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   answer_category,
+  createInitialThingsState,
   guesses,
   initialThingsState,
   join_game,
@@ -40,6 +41,34 @@ describe('things action set', () => {
     expect(state.roundReady).toBe(false);
     state = thingsReducer(state, answer_category({ player: 'b@example.com', answer: 'boots' }));
     expect(state.roundReady).toBe(true);
+  });
+
+  it('uses the table seed to insert players in a stable randomized order', () => {
+    let state = thingsReducer(createInitialThingsState('table-1'), join_game('ana@example.com'));
+    state = thingsReducer(state, join_game('bev@example.com'));
+    state = thingsReducer(state, join_game('cam@example.com'));
+
+    expect(state.players).toEqual(['bev@example.com', 'cam@example.com', 'ana@example.com']);
+    expect(state.alive).toEqual([true, true, true]);
+    expect(state.scores).toEqual([0, 0, 0]);
+  });
+
+  it('rotates the first player for new rounds through the randomized player order', () => {
+    let state = thingsReducer(createInitialThingsState('table-1'), join_game('ana@example.com'));
+    state = thingsReducer(state, join_game('bev@example.com'));
+    state = thingsReducer(state, join_game('cam@example.com'));
+
+    state = thingsReducer(state, set_category('first round'));
+    expect(state.players[state.currentPlayerIndex]).toBe('bev@example.com');
+
+    state = thingsReducer(state, set_category('second round'));
+    expect(state.players[state.currentPlayerIndex]).toBe('cam@example.com');
+
+    state = thingsReducer(state, set_category('third round'));
+    expect(state.players[state.currentPlayerIndex]).toBe('ana@example.com');
+
+    state = thingsReducer(state, set_category('fourth round'));
+    expect(state.players[state.currentPlayerIndex]).toBe('bev@example.com');
   });
 
   it('scrambles cast answers independently from player order', () => {

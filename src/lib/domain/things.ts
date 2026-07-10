@@ -9,6 +9,8 @@ export interface ThingsState {
   players: string[];
   alive: boolean[];
   currentPlayerIndex: number;
+  playerOrderSeed: string;
+  firstPlayerHistory: string[];
   scores: number[];
 }
 
@@ -44,8 +46,22 @@ export const initialThingsState: ThingsState = {
   showRound: false,
   roundOver: false,
   currentPlayerIndex: 0,
+  playerOrderSeed: '',
+  firstPlayerHistory: [],
   scores: []
 };
+
+export function createInitialThingsState(playerOrderSeed = ''): ThingsState {
+  return {
+    ...initialThingsState,
+    playerToAnswer: {},
+    players: [],
+    alive: [],
+    firstPlayerHistory: [],
+    scores: [],
+    playerOrderSeed
+  };
+}
 
 function recomputeRoundReady(state: ThingsState) {
   state.roundReady = state.players.length > 0 && state.players.every((player) => !!state.playerToAnswer[player]);
@@ -60,12 +76,19 @@ function seededHash(input: string) {
   return hash >>> 0;
 }
 
+function joinPosition(state: ThingsState, player: string) {
+  if (!state.playerOrderSeed) return state.players.length;
+  return seededHash(`${state.playerOrderSeed}:${state.players.join('|')}:${player}`) % (state.players.length + 1);
+}
+
 export const thingsReducer = createReducer(initialThingsState, (r) => {
   r.addCase(join_game, (state, { payload }) => {
     if (!state.players.includes(payload)) {
-      state.players.push(payload);
-      state.scores.push(0);
-      state.alive.push(true);
+      const insertAt = joinPosition(state, payload);
+      state.players.splice(insertAt, 0, payload);
+      state.scores.splice(insertAt, 0, 0);
+      state.alive.splice(insertAt, 0, true);
+      if (state.players.length > 1 && state.currentPlayerIndex >= insertAt) state.currentPlayerIndex++;
     }
   });
   r.addCase(leave_game, (state, { payload }) => {
@@ -79,6 +102,7 @@ export const thingsReducer = createReducer(initialThingsState, (r) => {
       state.scores.splice(playerIndex, 1);
       state.alive.splice(playerIndex, 1);
       delete state.playerToAnswer[payload];
+      state.firstPlayerHistory = state.firstPlayerHistory.filter((player) => player !== payload);
       recomputeRoundReady(state);
     }
   });
@@ -91,6 +115,18 @@ export const thingsReducer = createReducer(initialThingsState, (r) => {
   r.addCase(set_category, (state, { payload }) => {
     state.currentCategory = payload;
     state.alive = state.players.map(() => true);
+    if (state.players.length > 0) {
+      let starter = state.players.find((player) => !state.firstPlayerHistory.includes(player));
+      if (!starter) {
+        state.firstPlayerHistory = [];
+        starter = state.players[0];
+      }
+      state.currentPlayerIndex = state.players.indexOf(starter);
+      state.firstPlayerHistory.push(starter);
+    } else {
+      state.currentPlayerIndex = 0;
+      state.firstPlayerHistory = [];
+    }
     state.playerToAnswer = {};
     state.roundOver = false;
     state.roundReady = false;

@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { appendTableAction, subscribeTableActions } from './action-log';
 import {
-  initialThingsState,
+  createInitialThingsState,
   replayThings,
   type ThingsAction,
   type ThingsState
@@ -16,10 +16,11 @@ export interface RemoteGameSnapshot {
 }
 
 export function createRemoteGame(tableId: string) {
+  const initialState = createInitialThingsState(tableId);
   const store = writable<RemoteGameSnapshot>({
     actions: [],
     loading: true,
-    state: initialThingsState
+    state: initialState
   });
 
   let unsubscribe: () => void = () => undefined;
@@ -28,7 +29,7 @@ export function createRemoteGame(tableId: string) {
       store.set({
         actions,
         loading: false,
-        state: replayThings(actions)
+        state: replayThings(actions, initialState)
       });
     });
   }

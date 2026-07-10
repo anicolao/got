@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { AnyAction } from '@reduxjs/toolkit';
 import {
-  initialThingsState,
+  createInitialThingsState,
   normalizeAction,
   replayThings,
   type ThingsAction,
@@ -30,9 +30,10 @@ function writeStoredActions(tableId: string, actions: ThingsAction[]) {
 export function createLocalGame(tableId: string, seedActions: ThingsAction[] = []) {
   const actions = readStoredActions(tableId);
   const initialActions = actions.length > 0 ? actions : seedActions;
+  const initialState = createInitialThingsState(tableId);
   const store = writable<GameSnapshot>({
     actions: initialActions,
-    state: replayThings(initialActions, initialThingsState)
+    state: replayThings(initialActions, initialState)
   });
 
   function dispatch(action: ThingsAction) {
@@ -41,7 +42,7 @@ export function createLocalGame(tableId: string, seedActions: ThingsAction[] = [
       writeStoredActions(tableId, nextActions);
       return {
         actions: nextActions,
-        state: replayThings(nextActions, initialThingsState)
+        state: replayThings(nextActions, initialState)
       };
     });
   }
@@ -50,7 +51,7 @@ export function createLocalGame(tableId: string, seedActions: ThingsAction[] = [
     writeStoredActions(tableId, nextActions);
     store.set({
       actions: nextActions,
-      state: replayThings(nextActions, initialThingsState)
+      state: replayThings(nextActions, initialState)
     });
   }
 
