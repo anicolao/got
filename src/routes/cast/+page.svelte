@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   import { base } from '$app/paths';
   import QRCode from '$lib/components/QRCode.svelte';
-  import { displayPlayerName } from '$lib/domain/things';
+  import { displayPlayerName, scrambledCastAnswers } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
   import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
@@ -16,11 +16,7 @@
   });
   $: snapshot = $game;
   $: state = snapshot.state;
-  $: answers = state.players.map((player) => ({
-    player,
-    answer: state.playerToAnswer[player],
-    alive: state.alive[state.players.indexOf(player)]
-  }));
+  $: answers = scrambledCastAnswers(state, tableId);
   $: joinUrl = `${$page.url.origin}${base}/play?slug=${encodeURIComponent(tableId)}`;
   $: nameOf = (player: string) => displayPlayerName(player, $lobbyStore.users);
 </script>

@@ -6,6 +6,7 @@ import {
   join_game,
   leave_game,
   replayThings,
+  scrambledCastAnswers,
   set_category,
   show_round,
   thingsReducer
@@ -39,5 +40,24 @@ describe('things action set', () => {
     expect(state.roundReady).toBe(false);
     state = thingsReducer(state, answer_category({ player: 'b@example.com', answer: 'boots' }));
     expect(state.roundReady).toBe(true);
+  });
+
+  it('scrambles cast answers independently from player order', () => {
+    let state = thingsReducer(initialThingsState, join_game('ana@example.com'));
+    state = thingsReducer(state, join_game('bev@example.com'));
+    state = thingsReducer(state, join_game('cam@example.com'));
+    state = thingsReducer(state, set_category('you should never say at dinner'));
+    state = thingsReducer(state, answer_category({ player: 'ana@example.com', answer: 'I already ate' }));
+    state = thingsReducer(state, answer_category({ player: 'bev@example.com', answer: 'This tastes expensive' }));
+    state = thingsReducer(state, answer_category({ player: 'cam@example.com', answer: 'I brought spreadsheets' }));
+
+    const answers = scrambledCastAnswers(state, 'e2e-play');
+
+    expect(answers.map((item) => item.player)).toEqual(['bev@example.com', 'ana@example.com', 'cam@example.com']);
+    expect(answers.map((item) => item.answer)).toEqual([
+      'This tastes expensive',
+      'I already ate',
+      'I brought spreadsheets'
+    ]);
   });
 });

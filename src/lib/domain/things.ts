@@ -12,6 +12,12 @@ export interface ThingsState {
   scores: number[];
 }
 
+export interface CastAnswer {
+  player: string;
+  answer: string;
+  alive: boolean;
+}
+
 export const join_game = createAction<string>('join_game');
 export const leave_game = createAction<string>('leave_game');
 export const set_current_player = createAction<number>('set_current_player');
@@ -43,6 +49,15 @@ export const initialThingsState: ThingsState = {
 
 function recomputeRoundReady(state: ThingsState) {
   state.roundReady = state.players.length > 0 && state.players.every((player) => !!state.playerToAnswer[player]);
+}
+
+function seededHash(input: string) {
+  let hash = 2166136261;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 export const thingsReducer = createReducer(initialThingsState, (r) => {
@@ -150,4 +165,18 @@ export function nextLivingPlayerIndex(state: ThingsState) {
     next = (next + 1) % state.players.length;
   }
   return state.currentPlayerIndex;
+}
+
+export function scrambledCastAnswers(state: ThingsState, seed: string): CastAnswer[] {
+  return state.players
+    .map((player, index) => ({
+      player,
+      answer: state.playerToAnswer[player] || '',
+      alive: state.alive[index] ?? true
+    }))
+    .sort((a, b) => {
+      const aHash = seededHash(`${seed}:${state.currentCategory}:${a.player}:${a.answer}`);
+      const bHash = seededHash(`${seed}:${state.currentCategory}:${b.player}:${b.answer}`);
+      return aHash - bHash || a.player.localeCompare(b.player);
+    });
 }
