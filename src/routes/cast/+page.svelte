@@ -63,7 +63,7 @@
     height: 100vh;
     height: 100svh;
     overflow: hidden;
-    padding: clamp(12px, 2.4vw, 34px);
+    padding: clamp(1em, 3vw, 2em);
     background: #0f172a;
     color: #fff;
     display: grid;
