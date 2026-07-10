@@ -28,7 +28,7 @@
 <main class="cast">
   <header>
     <p>Game of Things</p>
-    <h1>{state.showRound ? `Things ... ${state.currentCategory}` : 'Scan to join the table'}</h1>
+    <h1>Things {state.currentCategory ? `... ${state.currentCategory}` : '...'}</h1>
   </header>
 
   {#if state.showRound}
@@ -50,9 +50,8 @@
   {:else}
     <section class="join">
       <div class="qr-wrap">
-        <QRCode value={joinUrl} label="Join game QR code" />
+        <QRCode value={joinUrl} label="Join game QR code" logoSrc={`${base}/things.png`} logoAlt="Game of Things" />
       </div>
-      <p>Scan to join</p>
     </section>
   {/if}
 </main>
@@ -191,19 +190,16 @@
   }
 
   .qr-wrap {
-    width: min(46vw, 46vh, 420px);
+    box-sizing: border-box;
+    width: min(58vw, 58vh, 500px);
+    max-width: 100%;
+    max-height: 100%;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     background: #facc15;
     border: clamp(8px, 1.4vw, 14px) solid #fff;
     padding: clamp(8px, 1.4vw, 14px);
-  }
-
-  .join p {
-    font-size: clamp(1.2rem, 2.8vw, 3rem);
-    font-weight: 900;
-    color: #facc15;
   }
 
   @media (max-width: 720px) {
