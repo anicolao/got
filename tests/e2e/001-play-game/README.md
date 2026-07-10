@@ -10,6 +10,7 @@ The moderator creates a category, records answers, and scores guesses.
 - [x] Ana is listed
 - [x] Bev is listed
 - [x] Cam is listed
+- [x] Draw category button visible
 
 ---
 

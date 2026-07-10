@@ -22,7 +22,8 @@ test('moderator runs a mobile game round', async ({ page }, testInfo) => {
     verifications: [
       { spec: 'Ana is listed', check: async () => await expect(page.getByText('Ana').first()).toBeVisible() },
       { spec: 'Bev is listed', check: async () => await expect(page.getByText('Bev').first()).toBeVisible() },
-      { spec: 'Cam is listed', check: async () => await expect(page.getByText('Cam').first()).toBeVisible() }
+      { spec: 'Cam is listed', check: async () => await expect(page.getByText('Cam').first()).toBeVisible() },
+      { spec: 'Draw category button visible', check: async () => await expect(page.getByRole('button', { name: 'Draw Category Card' })).toBeVisible() }
     ]
   });
 

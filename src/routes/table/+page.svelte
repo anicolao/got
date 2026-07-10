@@ -5,6 +5,7 @@
   import AuthBar from '$lib/components/AuthBar.svelte';
   import { authState } from '$lib/firebase/auth-store';
   import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
+  import { drawNextPromptCard } from '$lib/firebase/prompt-deck';
   import {
     answer_category,
     currentPlayer,
@@ -30,6 +31,8 @@
   let answer = '';
   let quickPlayer = '';
   let quickAnswer = '';
+  let drawingPrompt = false;
+  let promptError = '';
 
   $: snapshot = $game;
   $: state = snapshot.state;
@@ -44,6 +47,19 @@
   function revealCategory() {
     const value = category.trim();
     if (value) game.dispatch(set_category(value));
+  }
+
+  async function autofillCategory() {
+    drawingPrompt = true;
+    promptError = '';
+    try {
+      const card = await drawNextPromptCard();
+      category = card.text;
+    } catch (error) {
+      promptError = error instanceof Error ? error.message : String(error);
+    } finally {
+      drawingPrompt = false;
+    }
   }
 
   function submitAnswer() {
@@ -155,6 +171,10 @@
           Category
           <input aria-label="Category" bind:value={category} placeholder="you should never say..." />
         </label>
+        <button disabled={drawingPrompt} on:click={autofillCategory}>Draw Category Card</button>
+        {#if promptError}
+          <p class="error">{promptError}</p>
+        {/if}
         <button class="primary" on:click={revealCategory}>Reveal Category</button>
 
         <div class="readiness" aria-label="Player readiness">
