@@ -197,9 +197,9 @@
     aspect-ratio: 1;
     display: grid;
     place-items: center;
-    background: #facc15;
-    border: clamp(8px, 1.4vw, 14px) solid #fff;
-    padding: clamp(8px, 1.4vw, 14px);
+    background: rgb(165, 189, 89);
+    border-radius: 18px;
+    padding: clamp(16px, 2.6vw, 32px);
   }
 
   @media (max-width: 720px) {

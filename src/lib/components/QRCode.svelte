@@ -45,14 +45,19 @@
     position: relative;
     width: 100%;
     height: 100%;
+    aspect-ratio: 1;
     display: grid;
     place-items: center;
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
   }
 
   canvas {
     display: block;
     width: 100%;
     height: 100%;
+    aspect-ratio: 1;
     image-rendering: pixelated;
   }
 
