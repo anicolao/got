@@ -12,12 +12,13 @@
   } from '$lib/firebase/lobby-store';
   import { appendTableAction } from '$lib/firebase/action-log';
   import { join_game } from '$lib/domain/things';
-  import { displayName } from '$lib/domain/things';
+  import { displayPlayerName } from '$lib/domain/things';
   import {
     isThingsGame,
     join_table,
     leave_table,
     start_table,
+    thingsGameId,
     type Table
   } from '$lib/domain/tables';
 
@@ -30,6 +31,7 @@
 
   $: me = $authState.user?.email || '';
   $: signedIn = !!me;
+  $: realThingsGameId = thingsGameId($lobbyStore.gamedefs);
   $: tables = $lobbyStore.tables.tableIds
     .slice()
     .reverse()
@@ -51,7 +53,8 @@
 
   async function createTable() {
     await withBusy(async () => {
-      const tableId = await createThingsTable(me);
+      if (!realThingsGameId) throw new Error('Game of Things is not available yet.');
+      const tableId = await createThingsTable(me, realThingsGameId);
       await appendTableAction(tableId, join_game(me));
       await appendLobbyAction(start_table({ tableid: tableId }));
       await goto(`${base}/table?slug=${encodeURIComponent(tableId)}`);
@@ -108,7 +111,7 @@
     </section>
   {:else}
     <section class="toolbar">
-      <button class="primary" disabled={busy} on:click={createTable}>Create and Start Table</button>
+      <button class="primary" disabled={busy || !realThingsGameId} on:click={createTable}>Create and Start Table</button>
       <a href={`${base}/replay`}>Replay old game</a>
     </section>
 
@@ -130,11 +133,11 @@
         <article class:started={table.started}>
           <div class="table-main">
             <p class="status">{table.started ? 'Started' : 'Waiting'}</p>
-            <h2>{displayName(table.owner)}'s table</h2>
+            <h2>{displayPlayerName(table.owner, $lobbyStore.users)}'s table</h2>
             <p class="table-id">{table.tableid}</p>
             <div class="players" aria-label="Players">
               {#each table.players as player}
-                <span>{displayName(player)}</span>
+                <span>{displayPlayerName(player, $lobbyStore.users)}</span>
               {/each}
             </div>
           </div>

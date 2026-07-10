@@ -8,7 +8,7 @@
   import {
     answer_category,
     currentPlayer,
-    displayName,
+    displayPlayerName,
     guesses,
     join_game,
     leave_game,
@@ -79,6 +79,7 @@
 
   $: table = $lobbyStore.tables.tableIdToTable[tableId];
   $: isOwner = localMode || table?.owner === me;
+  $: nameOf = (player: string) => displayPlayerName(player, $lobbyStore.users);
 </script>
 
 <svelte:head>
@@ -103,9 +104,9 @@
     <section class="scoreboard" aria-label="Scoreboard">
       {#each state.players as player, i}
         <article class:out={!state.alive[i]} class:active={i === state.currentPlayerIndex && state.showRound}>
-          <strong>{displayName(player)}</strong>
+          <strong>{nameOf(player)}</strong>
           <span>{state.scores[i]}</span>
-          <button aria-label={`Remove ${displayName(player)}`} on:click={() => game.dispatch(leave_game(player))}>
+          <button aria-label={`Remove ${nameOf(player)}`} on:click={() => game.dispatch(leave_game(player))}>
             x
           </button>
         </article>
@@ -141,7 +142,7 @@
     {#if !signedIn}
       <p class="waiting">Sign in to moderate this table.</p>
     {:else if !isOwner}
-      <p class="waiting">Only {displayName(table?.owner || 'the table owner')} can moderate this table.</p>
+      <p class="waiting">Only {nameOf(table?.owner || 'the table owner')} can moderate this table.</p>
       <a class="primary" href={`${base}/play?slug=${encodeURIComponent(tableId)}`}>Play at this table</a>
     {:else}
       <div class="section-title">
@@ -165,7 +166,7 @@
               <ul>
                 {#each submittedPlayers as player}
                   <li>
-                    <span>{displayName(player)}</span>
+                    <span>{nameOf(player)}</span>
                     <strong>Ready</strong>
                   </li>
                 {/each}
@@ -180,8 +181,8 @@
               <ul>
                 {#each waitingPlayers as player}
                   <li>
-                    <span>{displayName(player)}</span>
-                    <button aria-label={`Remove ${displayName(player)}`} on:click={() => game.dispatch(leave_game(player))}>Remove</button>
+                    <span>{nameOf(player)}</span>
+                    <button aria-label={`Remove ${nameOf(player)}`} on:click={() => game.dispatch(leave_game(player))}>Remove</button>
                   </li>
                 {/each}
               </ul>
@@ -214,20 +215,20 @@
             Show Answers on Cast
           </button>
         {:else if state.players.length > 0}
-          <p class="waiting">Waiting for {waitingPlayers.map(displayName).join(', ')}</p>
+          <p class="waiting">Waiting for {waitingPlayers.map(nameOf).join(', ')}</p>
         {/if}
       {:else}
-        <p class="turn">Current player: <strong>{displayName(current)}</strong></p>
+        <p class="turn">Current player: <strong>{nameOf(current)}</strong></p>
         <div class="eliminations">
           {#each state.players as player, i}
             {#if state.alive[i] && player !== current}
               <button on:click={() => game.dispatch(guesses({ player: current, dead_player: player }))}>
-                {displayName(current)} guessed {displayName(player)}
+                {nameOf(current)} guessed {nameOf(player)}
               </button>
             {/if}
           {/each}
         </div>
-        <button class="primary" on:click={wrongGuess}>{displayName(current)} guessed wrong</button>
+        <button class="primary" on:click={wrongGuess}>{nameOf(current)} guessed wrong</button>
       {/if}
     {/if}
   </section>

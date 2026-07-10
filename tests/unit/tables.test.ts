@@ -6,7 +6,8 @@ import {
   leave_table,
   replayTables,
   start_table,
-  THINGS_GAME_ID
+  THINGS_GAME_ID,
+  thingsGameId
 } from '../../src/lib/domain/tables';
 
 describe('table lobby action set', () => {
@@ -48,5 +49,17 @@ describe('table lobby action set', () => {
         gameIdToGame: { 'legacy-id': { id: 'legacy-id', properties: { path: 'things' } } }
       })
     ).toBe(true);
+  });
+
+  it('selects the legacy Things gamedef document id for new tables', () => {
+    expect(
+      thingsGameId({
+        gameIds: ['words-id', 'things-id'],
+        gameIdToGame: {
+          'words-id': { id: 'words-id', properties: { path: 'words' } },
+          'things-id': { id: 'things-id', properties: { path: 'things' } }
+        }
+      })
+    ).toBe('things-id');
   });
 });

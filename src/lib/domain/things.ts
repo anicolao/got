@@ -132,6 +132,12 @@ export function displayName(player: string) {
     .join(' ');
 }
 
+export function displayPlayerName(player: string, users: Record<string, { name?: string | null }>) {
+  const fullName = users[player]?.name;
+  if (fullName) return fullName.trim().split(/\s+/)[0] || displayName(player);
+  return displayName(player);
+}
+
 export function currentPlayer(state: ThingsState) {
   return state.players[state.currentPlayerIndex] ?? '';
 }

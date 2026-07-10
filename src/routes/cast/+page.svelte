@@ -2,13 +2,18 @@
   import { page } from '$app/stores';
   import { base } from '$app/paths';
   import QRCode from '$lib/components/QRCode.svelte';
-  import { displayName } from '$lib/domain/things';
+  import { displayPlayerName } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
+  import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
+  import { onMount } from 'svelte';
 
   const tableId = $page.url.searchParams.get('slug') || 'game-night';
   const localMode = $page.url.searchParams.get('mode') === 'local' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
+  onMount(() => {
+    if (!localMode) subscribeLobby();
+  });
   $: snapshot = $game;
   $: state = snapshot.state;
   $: answers = state.players.map((player) => ({
@@ -17,6 +22,7 @@
     alive: state.alive[state.players.indexOf(player)]
   }));
   $: joinUrl = `${$page.url.origin}${base}/play?slug=${encodeURIComponent(tableId)}`;
+  $: nameOf = (player: string) => displayPlayerName(player, $lobbyStore.users);
 </script>
 
 <svelte:head>
@@ -40,7 +46,7 @@
     <aside class="scores" aria-label="Scores">
       {#each state.players as player, i}
         <div class:current={i === state.currentPlayerIndex}>
-          <strong>{displayName(player)}</strong>
+          <strong>{nameOf(player)}</strong>
           <span>{state.scores[i]}</span>
         </div>
       {/each}

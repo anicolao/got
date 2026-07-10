@@ -135,3 +135,7 @@ export function isThingsGame(gameId: string, gamedefs: GameDefsState) {
   if (gameId === THINGS_GAME_ID) return true;
   return gamedefs.gameIdToGame[gameId]?.properties?.path === 'things';
 }
+
+export function thingsGameId(gamedefs: GameDefsState) {
+  return gamedefs.gameIds.find((gameId) => gamedefs.gameIdToGame[gameId]?.properties?.path === 'things');
+}

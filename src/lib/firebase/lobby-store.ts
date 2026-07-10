@@ -25,26 +25,37 @@ import {
   type TablesState
 } from '$lib/domain/tables';
 
+export interface UserProfile {
+  email: string;
+  name?: string | null;
+  photo?: string | null;
+  uid?: string | null;
+}
+
 export interface LobbySnapshot {
   actions: TableAction[];
   error?: string;
   gamedefs: GameDefsState;
   loading: boolean;
   tables: TablesState;
+  users: Record<string, UserProfile>;
 }
 
 const state = writable<LobbySnapshot>({
   actions: [],
   gamedefs: initialGameDefsState,
   loading: true,
-  tables: initialTablesState
+  tables: initialTablesState,
+  users: {}
 });
 
 let actions: TableAction[] = [];
 let gamedefs = initialGameDefsState;
+let users: Record<string, UserProfile> = {};
 let subscribed = false;
 let unsubscribeActions: Unsubscribe | undefined;
 let unsubscribeGamedefs: Unsubscribe | undefined;
+let unsubscribeUsers: Unsubscribe | undefined;
 
 function publish(patch: Partial<LobbySnapshot> = {}) {
   state.set({
@@ -52,6 +63,7 @@ function publish(patch: Partial<LobbySnapshot> = {}) {
     gamedefs,
     loading: false,
     tables: replayTables(actions),
+    users,
     ...patch
   });
 }
@@ -88,11 +100,26 @@ export function subscribeLobby() {
     },
     () => publish()
   );
+
+  unsubscribeUsers = onSnapshot(
+    query(collection(firestore, 'users')),
+    (snapshot) => {
+      users = Object.fromEntries(
+        snapshot.docs.map((doc) => {
+          const data = doc.data() as UserProfile;
+          return [doc.id, { ...data, email: data.email || doc.id }];
+        })
+      );
+      publish();
+    },
+    () => publish()
+  );
 }
 
 export function stopLobbySubscription() {
   unsubscribeActions?.();
   unsubscribeGamedefs?.();
+  unsubscribeUsers?.();
   subscribed = false;
 }
 
@@ -112,13 +139,13 @@ export async function appendLobbyAction(action: TableAction) {
   });
 }
 
-export async function createThingsTable(owner: string) {
+export async function createThingsTable(owner: string, gameid = THINGS_GAME_ID) {
   if (!firestore) throw new Error('Firestore is unavailable outside the browser');
   const tableRef = await addDoc(collection(firestore, 'tables'), {
     creator: auth?.currentUser?.uid ?? null,
-    gameid: THINGS_GAME_ID,
+    gameid,
     created: serverTimestamp()
   });
-  await appendLobbyAction(create_table({ tableid: tableRef.id, gameid: THINGS_GAME_ID, owner }));
+  await appendLobbyAction(create_table({ tableid: tableRef.id, gameid, owner }));
   return tableRef.id;
 }

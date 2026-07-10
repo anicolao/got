@@ -2,9 +2,11 @@
   import { page } from '$app/stores';
   import AuthBar from '$lib/components/AuthBar.svelte';
   import { authState } from '$lib/firebase/auth-store';
-  import { answer_category, displayName, join_game } from '$lib/domain/things';
+  import { answer_category, displayName, displayPlayerName, join_game } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
+  import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
+  import { onMount } from 'svelte';
 
   const tableId = $page.url.searchParams.get('slug') || 'game-night';
   const urlMe = $page.url.searchParams.get('me') || 'player@example.com';
@@ -12,12 +14,17 @@
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
   let answer = '';
 
+  onMount(() => {
+    if (!localMode) subscribeLobby();
+  });
+
   $: snapshot = $game;
   $: state = snapshot.state;
   $: me = localMode ? urlMe : $authState.user?.email || '';
   $: signedIn = localMode || !!$authState.user?.email;
   $: joined = state.players.includes(me);
   $: existingAnswer = state.playerToAnswer[me] || '';
+  $: playerName = localMode ? displayName(me) : displayPlayerName(me, $lobbyStore.users);
 
   function submit() {
     if (answer.trim()) game.dispatch(answer_category({ player: me, answer: answer.trim() }));
@@ -39,7 +46,7 @@
       <p class="category">Your answer is tied to your Google account.</p>
     {:else}
       <p class="label">Player</p>
-      <h1>{displayName(me)}</h1>
+      <h1>{playerName}</h1>
       <p class="category">Things {state.currentCategory ? `... ${state.currentCategory}` : 'are waiting for a category'}</p>
 
       {#if !joined}
