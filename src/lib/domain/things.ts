@@ -203,6 +203,25 @@ export function nextLivingPlayerIndex(state: ThingsState) {
   return state.currentPlayerIndex;
 }
 
+export function remainingPlayersByScore(state: ThingsState) {
+  return state.players
+    .map((player, index) => ({ player, index, score: state.scores[index] || 0 }))
+    .filter((item) => state.alive[item.index])
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map((item) => item.player);
+}
+
+export function eliminatedPlayersForCurrentRound(actions: AnyAction[]) {
+  const roundStart = actions.findLastIndex((action) => action.type === 'set_category');
+  const eliminated: string[] = [];
+  for (const action of actions.slice(roundStart + 1)) {
+    if (action.type !== 'eliminates') continue;
+    const player = action.payload?.dead_player;
+    if (typeof player === 'string' && !eliminated.includes(player)) eliminated.push(player);
+  }
+  return eliminated;
+}
+
 export function scrambledCastAnswers(state: ThingsState, seed: string): CastAnswer[] {
   return state.players
     .map((player, index) => ({

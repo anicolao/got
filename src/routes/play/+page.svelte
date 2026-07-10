@@ -2,7 +2,14 @@
   import { page } from '$app/stores';
   import AuthBar from '$lib/components/AuthBar.svelte';
   import { authState } from '$lib/firebase/auth-store';
-  import { answer_category, displayName, displayPlayerName, join_game } from '$lib/domain/things';
+  import {
+    answer_category,
+    displayName,
+    displayPlayerName,
+    eliminatedPlayersForCurrentRound,
+    join_game,
+    remainingPlayersByScore
+  } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
   import { lobbyStore, subscribeLobby } from '$lib/firebase/lobby-store';
@@ -13,6 +20,7 @@
   const localMode = $page.url.searchParams.get('mode') === 'local' || tableId.startsWith('e2e-');
   const game = localMode ? getLocalSession(tableId) : createRemoteGame(tableId);
   let answer = '';
+  let lastCategory = '';
 
   onMount(() => {
     if (!localMode) subscribeLobby();
@@ -25,6 +33,13 @@
   $: joined = state.players.includes(me);
   $: existingAnswer = state.playerToAnswer[me] || '';
   $: playerName = localMode ? displayName(me) : displayPlayerName(me, $lobbyStore.users);
+  $: remainingPlayers = remainingPlayersByScore(state);
+  $: eliminatedPlayers = eliminatedPlayersForCurrentRound(snapshot.actions);
+  $: if (state.currentCategory !== lastCategory) {
+    lastCategory = state.currentCategory;
+    answer = '';
+  }
+  $: nameOf = (player: string) => localMode ? displayName(player) : displayPlayerName(player, $lobbyStore.users);
 
   function submit() {
     if (answer.trim()) game.dispatch(answer_category({ player: me, answer: answer.trim() }));
@@ -49,6 +64,38 @@
 
       {#if !joined}
         <button class="primary" on:click={() => game.dispatch(join_game(me))}>Join Game</button>
+      {:else if state.showRound}
+        <section class="progress" aria-label="Guessing progress">
+          <div>
+            <p class="label">Still in</p>
+            {#if remainingPlayers.length === 0}
+              <p class="muted">No players remain.</p>
+            {:else}
+              <ol class="roster">
+                {#each remainingPlayers as player}
+                  {@const index = state.players.indexOf(player)}
+                  <li>
+                    <span>{nameOf(player)}</span>
+                    <strong>{state.scores[index] || 0}</strong>
+                  </li>
+                {/each}
+              </ol>
+            {/if}
+          </div>
+
+          <div>
+            <p class="label">Eliminated</p>
+            {#if eliminatedPlayers.length === 0}
+              <p class="muted">No one has been eliminated yet.</p>
+            {:else}
+              <ul class="eliminated">
+                {#each eliminatedPlayers as player}
+                  <li>{nameOf(player)} said {state.playerToAnswer[player]}</li>
+                {/each}
+              </ul>
+            {/if}
+          </div>
+        </section>
       {:else}
         <label>
           {existingAnswer ? `Your answer: ${existingAnswer}` : 'Your answer'}
@@ -120,7 +167,8 @@
   }
 
   .category,
-  .player-info {
+  .player-info,
+  .muted {
     color: #475569;
     line-height: 1.4;
   }
@@ -157,6 +205,40 @@
     color: #fff;
     background: #0f172a;
     border-color: #0f172a;
+  }
+
+  .progress {
+    display: grid;
+    gap: 18px;
+  }
+
+  .roster,
+  .eliminated {
+    display: grid;
+    gap: 8px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .roster li,
+  .eliminated li {
+    min-height: 42px;
+    display: grid;
+    align-items: center;
+    border: 1px solid #d8dee8;
+    border-radius: 6px;
+    background: #f8fafc;
+    padding: 8px 10px;
+  }
+
+  .roster li {
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+
+  .roster strong {
+    font-size: 1.15rem;
   }
 
   .player-footer {

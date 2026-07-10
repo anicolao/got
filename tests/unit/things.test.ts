@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   answer_category,
   createInitialThingsState,
+  eliminatedPlayersForCurrentRound,
   guesses,
   initialThingsState,
   join_game,
   leave_game,
+  remainingPlayersByScore,
   replayThings,
   scrambledCastAnswers,
   set_category,
@@ -88,5 +90,32 @@ describe('things action set', () => {
       'I already ate',
       'I brought spreadsheets'
     ]);
+  });
+
+  it('orders remaining players by score descending', () => {
+    const state = replayThings([
+      join_game('ana@example.com'),
+      join_game('bev@example.com'),
+      join_game('cam@example.com'),
+      set_category('round'),
+      answer_category({ player: 'ana@example.com', answer: 'a' }),
+      answer_category({ player: 'bev@example.com', answer: 'b' }),
+      answer_category({ player: 'cam@example.com', answer: 'c' }),
+      guesses({ player: 'cam@example.com', dead_player: 'bev@example.com' })
+    ]);
+
+    expect(remainingPlayersByScore(state)).toEqual(['cam@example.com', 'ana@example.com']);
+  });
+
+  it('lists eliminated players in current-round elimination order', () => {
+    const actions = [
+      set_category('old round'),
+      guesses({ player: 'ana@example.com', dead_player: 'old@example.com' }),
+      set_category('new round'),
+      guesses({ player: 'ana@example.com', dead_player: 'bev@example.com' }),
+      guesses({ player: 'cam@example.com', dead_player: 'ana@example.com' })
+    ];
+
+    expect(eliminatedPlayersForCurrentRound(actions)).toEqual(['bev@example.com', 'ana@example.com']);
   });
 });
