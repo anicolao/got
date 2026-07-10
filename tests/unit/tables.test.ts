@@ -4,6 +4,7 @@ import {
   isThingsGame,
   join_table,
   leave_table,
+  normalizeTableAction,
   replayTables,
   start_table,
   THINGS_GAME_ID,
@@ -27,6 +28,17 @@ describe('table lobby action set', () => {
     expect(state.tableIdToTable['table-a'].started).toBe(true);
     expect(state.tableIdToTable['table-b'].players).toEqual(['bev@example.com']);
     expect(state.tableIdToTable['table-b'].started).toBe(false);
+  });
+
+  it('preserves the create action timestamp as table creation time', () => {
+    const action = normalizeTableAction({
+      type: 'create_table',
+      payload: { tableid: 'table-a', gameid: THINGS_GAME_ID, owner: 'ana@example.com' },
+      timestamp: { seconds: 1000, nanoseconds: 500_000_000 }
+    });
+    const state = replayTables(action ? [action] : []);
+
+    expect(state.tableIdToTable['table-a'].createdAtMs).toBe(1000500);
   });
 
   it('lets a player leave a waiting table', () => {

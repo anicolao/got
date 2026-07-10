@@ -4,6 +4,7 @@ export interface Table {
   tableid: string;
   gameid: string;
   owner: string;
+  createdAtMs?: number;
   players: string[];
   started: boolean;
   completed: boolean;
@@ -26,7 +27,7 @@ export interface GameDefsState {
 
 export const THINGS_GAME_ID = 'things';
 
-export const create_table = createAction<{ tableid: string; gameid: string; owner: string }>(
+export const create_table = createAction<{ tableid: string; gameid: string; owner: string; createdAtMs?: number }>(
   'create_table'
 );
 export const join_table = createAction<{ tableid: string; player: string }>('join_table');
@@ -66,6 +67,7 @@ export const tablesReducer = createReducer(initialTablesState, (r) => {
     }
     state.tableIdToTable[payload.tableid] = {
       ...payload,
+      createdAtMs: payload.createdAtMs,
       players: [payload.owner],
       started: false,
       completed: false
@@ -108,7 +110,8 @@ export function normalizeTableAction(action: AnyAction): TableAction | undefined
     return create_table({
       tableid: String(payload.tableid),
       gameid: String(payload.gameid),
-      owner: String(payload.owner)
+      owner: String(payload.owner),
+      createdAtMs: timestampToMillis(action.timestamp)
     });
   }
   if (type === 'join_table' && payload?.tableid && payload?.player) {
@@ -123,6 +126,17 @@ export function normalizeTableAction(action: AnyAction): TableAction | undefined
   }
   if (type === 'destroy_table' && payload?.tableid) {
     return destroy_table({ tableid: String(payload.tableid) });
+  }
+  return undefined;
+}
+
+function timestampToMillis(timestamp: unknown): number | undefined {
+  if (typeof timestamp === 'number' && Number.isFinite(timestamp)) return timestamp;
+  if (timestamp instanceof Date) return timestamp.getTime();
+  if (timestamp && typeof timestamp === 'object') {
+    const value = timestamp as { toMillis?: () => number; seconds?: number; nanoseconds?: number };
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.seconds === 'number') return value.seconds * 1000 + Math.floor((value.nanoseconds || 0) / 1_000_000);
   }
   return undefined;
 }

@@ -24,6 +24,7 @@
 
   let busy = false;
   let error = '';
+  const idleAfterMs = 6 * 60 * 60 * 1000;
 
   onMount(() => {
     subscribeLobby();
@@ -31,13 +32,20 @@
 
   $: me = $authState.user?.email || '';
   $: signedIn = !!me;
+  $: now = Date.now();
   $: realThingsGameId = thingsGameId($lobbyStore.gamedefs);
-  $: tables = $lobbyStore.tables.tableIds
+  $: allTables = $lobbyStore.tables.tableIds
     .slice()
     .reverse()
     .map((tableId) => $lobbyStore.tables.tableIdToTable[tableId])
-    .filter((table): table is Table => !!table && !table.completed)
     .filter((table) => isThingsGame(table.gameid, $lobbyStore.gamedefs));
+  $: tables = allTables.filter((table) => !isIdleOrCompleted(table, now));
+  $: idleTables = allTables.filter((table) => isIdleOrCompleted(table, now));
+
+  function isIdleOrCompleted(table: Table, atMs: number) {
+    if (!table.createdAtMs) return false;
+    return atMs - table.createdAtMs > idleAfterMs;
+  }
 
   async function withBusy(fn: () => Promise<void>) {
     busy = true;
@@ -86,6 +94,39 @@
   }
 </script>
 
+{#snippet tableCard(table: Table, status: string)}
+  {@const joined = table.players.includes(me)}
+  {@const owner = table.owner === me}
+  <article class:started={table.started} class:completed={table.completed}>
+    <div class="table-main">
+      <p class="status">{status}</p>
+      <h2>{displayPlayerName(table.owner, $lobbyStore.users)}'s table</h2>
+      <p class="table-id">{table.tableid}</p>
+      <div class="players" aria-label="Players">
+        {#each table.players as player}
+          <span>{displayPlayerName(player, $lobbyStore.users)}</span>
+        {/each}
+      </div>
+    </div>
+
+    <div class="table-actions">
+      {#if table.started}
+        <a class="primary" href={`${base}/play?slug=${encodeURIComponent(table.tableid)}`}>Play</a>
+        {#if owner}
+          <a href={`${base}/table?slug=${encodeURIComponent(table.tableid)}`}>Moderate</a>
+        {/if}
+        <a href={`${base}/cast?slug=${encodeURIComponent(table.tableid)}`}>Cast</a>
+      {:else if owner}
+        <button class="primary" disabled={busy} on:click={() => startTable(table)}>Start</button>
+      {:else if joined}
+        <button disabled={busy} on:click={() => leaveTable(table.tableid)}>Leave</button>
+      {:else}
+        <button class="primary" disabled={busy} on:click={() => joinTable(table.tableid)}>Join</button>
+      {/if}
+    </div>
+  </article>
+{/snippet}
+
 <svelte:head>
   <title>Tables | Game of Things</title>
 </svelte:head>
@@ -119,47 +160,29 @@
       <p class="error">{error || $lobbyStore.error}</p>
     {/if}
 
-    <section class="table-list" aria-label="Tables">
+    <section class="table-list" aria-label="Active tables">
       {#if tables.length === 0}
         <article class="empty">
-          <h2>No active tables</h2>
+          <h2>No active or recent tables</h2>
           <p>Create a table to start a game.</p>
         </article>
       {/if}
 
       {#each tables as table}
-        {@const joined = table.players.includes(me)}
-        {@const owner = table.owner === me}
-        <article class:started={table.started}>
-          <div class="table-main">
-            <p class="status">{table.started ? 'Started' : 'Waiting'}</p>
-            <h2>{displayPlayerName(table.owner, $lobbyStore.users)}'s table</h2>
-            <p class="table-id">{table.tableid}</p>
-            <div class="players" aria-label="Players">
-              {#each table.players as player}
-                <span>{displayPlayerName(player, $lobbyStore.users)}</span>
-              {/each}
-            </div>
-          </div>
-
-          <div class="table-actions">
-            {#if table.started}
-              <a class="primary" href={`${base}/play?slug=${encodeURIComponent(table.tableid)}`}>Play</a>
-              {#if owner}
-                <a href={`${base}/table?slug=${encodeURIComponent(table.tableid)}`}>Moderate</a>
-              {/if}
-              <a href={`${base}/cast?slug=${encodeURIComponent(table.tableid)}`}>Cast</a>
-            {:else if owner}
-              <button class="primary" disabled={busy} on:click={() => startTable(table)}>Start</button>
-            {:else if joined}
-              <button disabled={busy} on:click={() => leaveTable(table.tableid)}>Leave</button>
-            {:else}
-              <button class="primary" disabled={busy} on:click={() => joinTable(table.tableid)}>Join</button>
-            {/if}
-          </div>
-        </article>
+        {@render tableCard(table, table.completed ? 'Completed' : table.started ? 'Started' : 'Waiting')}
       {/each}
     </section>
+
+    {#if idleTables.length > 0}
+      <details class="idle-games">
+        <summary>Idle/Completed games ({idleTables.length})</summary>
+        <section class="table-list" aria-label="Idle or completed tables">
+          {#each idleTables as table}
+            {@render tableCard(table, table.completed ? 'Completed' : 'Idle')}
+          {/each}
+        </section>
+      </details>
+    {/if}
   {/if}
 </main>
 
@@ -235,6 +258,28 @@
     gap: 10px;
   }
 
+  .idle-games {
+    display: grid;
+    gap: 10px;
+  }
+
+  .idle-games summary {
+    min-height: 44px;
+    padding: 0 12px;
+    display: grid;
+    align-items: center;
+    border: 1px solid #d8dee8;
+    border-radius: 8px;
+    background: #fff;
+    color: #475569;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .idle-games[open] summary {
+    margin-bottom: 10px;
+  }
+
   article {
     display: grid;
     gap: 12px;
@@ -244,6 +289,10 @@
 
   article.started {
     border-left-color: #15803d;
+  }
+
+  article.completed {
+    border-left-color: #64748b;
   }
 
   .empty {

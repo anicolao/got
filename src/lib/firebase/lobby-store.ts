@@ -78,8 +78,7 @@ export function subscribeLobby() {
       actions = snapshot.docs
         .map((doc) => {
           const data = doc.data() as AnyAction & { timestamp?: unknown };
-          const { timestamp: _timestamp, ...action } = data;
-          return normalizeTableAction(action);
+          return normalizeTableAction(data);
         })
         .filter((action): action is TableAction => !!action);
       publish();
