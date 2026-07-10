@@ -51,8 +51,8 @@
     max-width: 100%;
     max-height: 100%;
     aspect-ratio: 1;
-    display: grid;
-    place-items: center;
+    display: block;
+    padding: 4%;
     background: #fff;
     border-radius: 10px;
     overflow: hidden;
@@ -61,11 +61,8 @@
   canvas {
     box-sizing: border-box;
     display: block;
-    position: absolute;
-    left: 4%;
-    top: 4%;
-    width: 92%;
-    height: 92%;
+    width: 100% !important;
+    height: 100% !important;
     min-width: 0;
     min-height: 0;
     max-width: 100%;
