@@ -7,16 +7,22 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import {
+  disneyBiasCards,
   nextDeckDraw,
   shuffledPromptAt,
   type PromptCard,
+  type PromptDeckId,
   type PromptDeckState
 } from '$lib/domain/prompt-deck';
 
 const PROMPTS_COLLECTION = 'thingsPrompts';
 const POSITIVE_PROMPTS_COLLECTION = 'thingsPositivePrompts';
+const DISNEY_PROMPTS_COLLECTION = 'thingsDisneyPrompts';
 const DECK_STATE_COLLECTION = 'thingsPromptDeck';
-const DECK_STATE_DOCUMENT = 'state';
+const DECK_STATE_DOCUMENTS = {
+  main: 'state',
+  disneyBiased: 'disneyBiased'
+} satisfies Record<PromptDeckId, string>;
 
 function randomSeed() {
   return Math.floor(Math.random() * 0x7fffffff);
@@ -44,28 +50,43 @@ export async function readPromptCards() {
   return [...prompts, ...positivePrompts];
 }
 
-export async function drawNextPromptCard() {
-  if (!firestore) throw new Error('Firestore is unavailable outside the browser');
-  const cards = await readPromptCards();
-  if (cards.length === 0) throw new Error('No prompt cards are available.');
+export async function readDisneyPromptCards() {
+  return readPromptCollection('disney', DISNEY_PROMPTS_COLLECTION);
+}
 
-  const stateRef = doc(firestore, DECK_STATE_COLLECTION, DECK_STATE_DOCUMENT);
+function buildCardsForDeck(deckId: PromptDeckId, mainCards: PromptCard[], disneyCards: PromptCard[], seed: number) {
+  if (deckId === 'disneyBiased') return disneyBiasCards(mainCards, disneyCards, seed);
+  return mainCards;
+}
+
+export async function drawNextPromptCard(deckId: PromptDeckId = 'main') {
+  if (!firestore) throw new Error('Firestore is unavailable outside the browser');
+  const [mainCards, disneyCards] = await Promise.all([
+    readPromptCards(),
+    deckId === 'disneyBiased' ? readDisneyPromptCards() : Promise.resolve([])
+  ]);
+  if (mainCards.length === 0) throw new Error('No prompt cards are available.');
+
+  const stateRef = doc(firestore, DECK_STATE_COLLECTION, DECK_STATE_DOCUMENTS[deckId]);
   const draw = await runTransaction(firestore, async (transaction) => {
     const snapshot = await transaction.get(stateRef);
     const existing = snapshot.exists()
       ? (snapshot.data() as Partial<PromptDeckState>)
       : {};
+    const seed = Number(existing.seed || randomSeed());
+    const cards = buildCardsForDeck(deckId, mainCards, disneyCards, seed);
     const state: PromptDeckState = {
       currentIndex: Number(existing.currentIndex || 0),
-      seed: Number(existing.seed || randomSeed()),
-      totalEntries: Number(existing.totalEntries || cards.length)
+      seed,
+      totalEntries: cards.length
     };
     const result = nextDeckDraw(state, randomSeed());
+    const nextCards = buildCardsForDeck(deckId, mainCards, disneyCards, result.nextState.seed);
     transaction.set(
       stateRef,
       {
         ...result.nextState,
-        totalEntries: cards.length,
+        totalEntries: nextCards.length,
         updatedAt: serverTimestamp()
       },
       { merge: true }
@@ -76,6 +97,7 @@ export async function drawNextPromptCard() {
     };
   });
 
+  const cards = buildCardsForDeck(deckId, mainCards, disneyCards, draw.seed);
   const card = shuffledPromptAt(cards, draw.seed, draw.drawIndex);
   if (!card) throw new Error('No prompt card matched the deck draw.');
   return card;

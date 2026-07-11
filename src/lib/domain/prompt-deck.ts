@@ -1,9 +1,11 @@
 export interface PromptCard {
   id: string;
-  kind: 'prompt' | 'positive';
+  kind: 'prompt' | 'positive' | 'disney';
   text: string;
   ordinal: number;
 }
+
+export type PromptDeckId = 'main' | 'disneyBiased';
 
 export interface PromptDeckState {
   currentIndex: number;
@@ -30,6 +32,24 @@ export function shuffledPromptAt(cards: PromptCard[], seed: number, index: numbe
     return a.id.localeCompare(b.id);
   });
   return ordered[index % ordered.length];
+}
+
+export function disneyBiasCardCount(mainCardCount: number) {
+  return Math.ceil(Math.max(0, mainCardCount) / 2);
+}
+
+export function disneyBiasCards(mainCards: PromptCard[], disneyCards: PromptCard[], seed: number) {
+  if (disneyCards.length === 0) return [...mainCards];
+  const disneyCount = disneyBiasCardCount(mainCards.length);
+  const weightedDisneyCards = Array.from({ length: disneyCount }, (_, slot) => {
+    const source = disneyCards[seededHash(`${seed}:disney:${slot}`) % disneyCards.length];
+    return {
+      ...source,
+      id: `${source.id}-${slot}`,
+      ordinal: slot
+    };
+  });
+  return [...mainCards, ...weightedDisneyCards];
 }
 
 export function nextDeckDraw(state: PromptDeckState, nextSeed: number) {

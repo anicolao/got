@@ -20,6 +20,7 @@
   } from '$lib/domain/things';
   import { getLocalSession } from '$lib/domain/session';
   import { createRemoteGame } from '$lib/firebase/remote-game';
+  import type { PromptDeckId } from '$lib/domain/prompt-deck';
 
   const tableId = $page.url.searchParams.get('slug') || 'game-night';
   const urlMe = $page.url.searchParams.get('me') || 'moderator@example.com';
@@ -33,6 +34,7 @@
   let quickAnswer = '';
   let drawingPrompt = false;
   let promptError = '';
+  let promptDeck: PromptDeckId = 'main';
 
   $: snapshot = $game;
   $: state = snapshot.state;
@@ -53,7 +55,7 @@
     drawingPrompt = true;
     promptError = '';
     try {
-      const card = await drawNextPromptCard();
+      const card = await drawNextPromptCard(promptDeck);
       category = card.text;
     } catch (error) {
       promptError = error instanceof Error ? error.message : String(error);
@@ -171,6 +173,17 @@
           Category
           <input aria-label="Category" bind:value={category} placeholder="you should never say..." />
         </label>
+        <fieldset class="deck-picker">
+          <legend>Category deck</legend>
+          <label>
+            <input type="radio" bind:group={promptDeck} value="main" />
+            Main Shuffle
+          </label>
+          <label>
+            <input type="radio" bind:group={promptDeck} value="disneyBiased" />
+            Disney Biased
+          </label>
+        </fieldset>
         <button disabled={drawingPrompt} on:click={autofillCategory}>Draw Category Card</button>
         {#if promptError}
           <p class="error">{promptError}</p>
@@ -408,6 +421,37 @@
     border: 1px solid #b8c0cc;
     border-radius: 6px;
     padding: 0 12px;
+  }
+
+  .deck-picker {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .deck-picker legend {
+    grid-column: 1 / -1;
+    padding: 0;
+    font-weight: 800;
+  }
+
+  .deck-picker label {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid #b8c0cc;
+    border-radius: 6px;
+    padding: 0 10px;
+    background: #fff;
+  }
+
+  .deck-picker input {
+    width: auto;
+    min-height: auto;
   }
 
   textarea {
